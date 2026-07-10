@@ -170,6 +170,7 @@ jobs:
     needs: [deploy_site, post_deployment]
     runs-on: ubuntu-latest
     if: |
+      always() &&
       (needs.deploy_site.result == 'success') &&
       (needs.post_deployment.result == 'failure' || needs.post_deployment.result == 'cancelled')
     steps:
