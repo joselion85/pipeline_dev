@@ -136,7 +136,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: "Stop IHS for ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
-        uses: ./github/actions/ihs-stop
+        uses: ./.github/actions/ihs-stop
         with:
           application: ${{ github.event.inputs.application }}
           oc: ${{ github.event.inputs.oc }}
@@ -155,12 +155,22 @@ jobs:
           # Add your verification commands here
 
       - name: "Start IHS for ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
-        uses: ./github/actions/ihs-start
+        uses: ./.github/actions/ihs-start
         with:
           application: ${{ github.event.inputs.application }}
           oc: ${{ github.event.inputs.oc }}
           environment: ${{ github.event.inputs.environment }}
           site: ${{ github.event.inputs.site }}
+
+      # Call the reusable workflow for starting IHS
+      - name: 'Start IHS'
+        uses: ./.github/workflows/_cd-ihs-start.yml
+        with:
+          application: ${{ github.event.inputs.application }}
+          oc: ${{ github.event.inputs.oc }}
+          environment: ${{ github.event.inputs.environment }}
+          site: ${{ github.event.inputs.site }}
+
 
   # post_deployment:
   #   name: 'Post Deployment Verification'
