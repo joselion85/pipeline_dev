@@ -42,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout code'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 'Artifactory Login'
         id: artifactory-login
@@ -73,7 +73,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout code'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 'Backup Current Deployment'
         run: |
@@ -86,7 +86,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout code'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 'Copy Artifacts'
         run: |
@@ -101,7 +101,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout code'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 'Deploy Application to Site 1'
         run: |
@@ -116,7 +116,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout code'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 'Deploy Application to Site 2'
         run: |
@@ -131,10 +131,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout code'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 'Verify Deployment'
         run: |
+          echo "::notice::Verifying deployment of ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
           echo "Verifying deployment of ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
           # Add your verification commands here
 
@@ -145,10 +146,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout code'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 'Generate Summary'
         run: |
+          echo "::notice::Generating deployment summary for ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
           echo "Generating deployment summary for ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
           # Add your commands to generate a summary here
       
