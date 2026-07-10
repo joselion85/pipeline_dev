@@ -1,0 +1,56 @@
+# =============================================================================
+# CD Reusable Workflow for WAS Deployment to STOP the IHS
+# =============================================================================
+# This workflow is designed to be reusable and can be called from other 
+# workflows for stopping the IHS in the UAT environment.
+#
+# Workflow stages:
+# 1. Prepare
+# 2. Stop IHS
+# 3. Summary
+
+name: 'CD - WAS Stop IHS Pipeline UAT'
+on:
+  workflow_call:
+    inputs:
+      application:
+        description: 'Application name for stopping IHS'
+        required: true
+        type: string
+      oc:
+        description: 'OC number'
+        required: false
+        type: string
+      environment:
+        description: 'Environment to stop IHS'
+        required: true
+        type: string
+        default: 'uat'
+      site:
+        description: 'Site to stop IHS'
+        required: true
+        type: string
+        default: 'site1'
+
+jobs:
+  prepare:
+    name: 'Prepare Stop IHS'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@v5
+
+      - name: 'Stop IHS'
+        id: stop-ihs
+        uses: ./github/actions/ihs-stop
+        with:
+          application: ${{ inputs.application }}
+          oc: ${{ inputs.oc }}
+          environment: ${{ inputs.environment }}
+          site: ${{ inputs.site }}
+
+      - name: 'Generate Summary'
+        id: generate-summary
+        run: |
+          echo "Generating summary for IHS stop operation..."
+          # Add commands to generate summary here

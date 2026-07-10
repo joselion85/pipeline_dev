@@ -1,4 +1,20 @@
-name: 'WAS Deployment CD Pipeline UAT'
+# =============================================================================
+# CD Reusable Workflow for WAS Deployment
+# =============================================================================
+# This workflow is designed to be reusable and can be called from other 
+# workflows for deploying applications to UAT environment. 
+#
+# El caller invoca este reusable por cada SITE en secuencia.
+
+# Workflow stages:
+# 1. Prepare
+# 2. Backup
+# 3. Copy Artifacts
+# 4. Deploy to Site
+# 5. Post Deployment Verification
+# 6. Generate Deployment Summary
+
+name: 'CD - WAS Deployment Pipeline UAT'
 on:
   workflow_call:
     inputs:
@@ -20,6 +36,7 @@ on:
         required: true
         type: string
         default: 'site1'
+  # Temporary workflow_dispatch for testing purposes
   workflow_dispatch:
     inputs:
       application:
@@ -48,6 +65,10 @@ on:
         options:
           - site1
           - site2
+
+matrix:
+  site1: [va101, va102, va103, va104]
+  site2: [va201, va202, va203, va204]
 
 jobs:
   prepare:
@@ -166,58 +187,3 @@ jobs:
           echo "Uploading deployment summary for ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
           # Add your commands to upload the summary artifact here
 
-  rollback:
-    name: 'Rollback Deployment'
-    needs: [deploy_site, post_deployment]
-    if: |
-      always() &&
-      (needs.deploy_site.result == 'success') &&
-      (needs.post_deployment.result == 'failure' || needs.post_deployment.result == 'cancelled')
-    uses: ./.github/workflows/_cd-rollback-prv.yml
-    with:
-      application: ${{ inputs.application }}
-      environment: ${{ inputs.environment }}
-      oc: ${{ inputs.oc }}
-      site: ${{ inputs.site }}
-        
-  rollback2:
-    # Testing rollback with a different approach (Async call to another workflow)  
-    name: 'Rollback Deployment Async'
-    needs: [deploy_site, post_deployment]
-    runs-on: ubuntu-latest
-    if: |
-      always() &&
-      (needs.deploy_site.result == 'success') &&
-      (needs.post_deployment.result == 'failure' || needs.post_deployment.result == 'cancelled')
-    steps:
-      - name: 'Checkout code'
-        uses: actions/checkout@v5
-
-      # Call another workflow for rollback
-      - name: 'Trigger Rollback Workflow'
-        uses: actions/github-script@v9
-        with:
-          script: |
-            const { owner, repo } = context.repo;
-            const workflow_id = '.github/workflows/_cd-rollback-prv.yml';
-            const ref = context.ref;
-            const inputs = {
-              application: '${{ github.event.inputs.application }}',
-              environment: '${{ github.event.inputs.environment }}',
-              oc: '${{ github.event.inputs.oc }}',
-              site: '${{ github.event.inputs.site }}'
-            };
-            await github.actions.createWorkflowDispatch({
-              owner,
-              repo,
-              workflow_id,
-              ref,
-              inputs
-            });
-    
-      - name: 'Rollback Deployment'
-        run: |
-          echo "::warning::Rolling back deployment of ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
-          echo "Rolling back deployment of ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
-          # Add your rollback commands here
-        

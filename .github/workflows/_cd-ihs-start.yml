@@ -1,0 +1,56 @@
+# =============================================================================
+# CD Reusable Workflow for WAS Deployment to START the IHS
+# =============================================================================
+# This workflow is designed to be reusable and can be called from other 
+# workflows for starting the IHS in the UAT environment.
+#
+# Workflow stages:
+# 1. Prepare
+# 2. Start IHS
+# 3. Summary
+
+name: 'CD - WAS Start IHS Pipeline UAT'
+on:
+  workflow_call:
+    inputs:
+      application:
+        description: 'Application name for starting IHS'
+        required: true
+        type: string
+      oc:
+        description: 'OC number'
+        required: false
+        type: string
+      environment:
+        description: 'Environment to start IHS'
+        required: true
+        type: string
+        default: 'uat'
+      site:
+        description: 'Site to start IHS'
+        required: true
+        type: string
+        default: 'site1'
+
+jobs:
+  prepare:
+    name: 'Prepare Start IHS'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@v5
+
+      - name: 'Start IHS'
+        id: start-ihs
+        uses: ./github/actions/ihs-start
+        with:
+          application: ${{ inputs.application }}
+          oc: ${{ inputs.oc }}
+          environment: ${{ inputs.environment }}
+          site: ${{ inputs.site }}
+
+      - name: 'Generate Summary'
+        id: generate-summary
+        run: |
+          echo "Generating summary for IHS start operation..."
+          # Add commands to generate summary here

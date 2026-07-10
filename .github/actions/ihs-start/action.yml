@@ -1,0 +1,22 @@
+name: IHS Start Action
+description: 'Action to start IBM HTTP Server (IHS) for a given application, OC, environment, and site.'
+inputs:
+  application:
+    description: 'Application name for starting IHS'
+    required: true
+  oc:
+    description: 'OC number'
+    required: true
+  environment:
+    description: 'Environment to start IHS'
+    required: true
+  site:
+    description: 'Site to start IHS'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: 'Start IHS'
+      run: |
+        echo "Starting IHS for application: ${{ inputs.application }}, OC: ${{ inputs.oc }}, Environment: ${{ inputs.environment }}, Site: ${{ inputs.site }}"  
+        echo "::notice::Starting IHS for application: ${{ inputs.application }}, OC: ${{ inputs.oc }}, Environment: ${{ inputs.environment }}, Site: ${{ inputs.site }}"
