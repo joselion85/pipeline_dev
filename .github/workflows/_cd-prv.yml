@@ -186,7 +186,7 @@ jobs:
 
   resumen:
     name: 'Generate Deployment Summary'
-    needs: post_deployment
+    needs: deploy_site
     runs-on: ubuntu-latest
     if: always()
     steps:
