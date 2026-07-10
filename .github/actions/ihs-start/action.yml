@@ -4,9 +4,6 @@ inputs:
   application:
     description: 'Application name for starting IHS'
     required: true
-  oc:
-    description: 'OC number'
-    required: true
   environment:
     description: 'Environment to start IHS'
     required: true

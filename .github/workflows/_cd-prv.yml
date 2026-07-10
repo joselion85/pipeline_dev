@@ -135,11 +135,10 @@ jobs:
       - name: 'Checkout code'
         uses: actions/checkout@v5
 
-      - name: "Stop IHS for ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
+      - name: "Stop IHS for ${{ github.event.inputs.site }} in ${{ github.event.inputs.environment }}"
         uses: ./.github/actions/ihs-stop
         with:
           application: ${{ github.event.inputs.application }}
-          oc: ${{ github.event.inputs.oc }}
           environment: ${{ github.event.inputs.environment }}
           site: ${{ github.event.inputs.site }}
 
@@ -154,22 +153,33 @@ jobs:
           echo "::notice::Verifying deployment of ${{ github.event.inputs.application }} to Site ${{ github.event.inputs.site }} in ${{ github.event.inputs.environment }}"
           # Add your verification commands here
 
-      - name: "Start IHS for ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
+      - name: "Start IHS for ${{ github.event.inputs.site }} in ${{ github.event.inputs.environment }}"
         uses: ./.github/actions/ihs-start
         with:
           application: ${{ github.event.inputs.application }}
-          oc: ${{ github.event.inputs.oc }}
           environment: ${{ github.event.inputs.environment }}
           site: ${{ github.event.inputs.site }}
 
-      # Call the reusable workflow for starting IHS
-      - name: 'Start IHS'
-        uses: ./.github/workflows/_cd-ihs-start.yml
-        with:
-          application: ${{ github.event.inputs.application }}
-          oc: ${{ github.event.inputs.oc }}
-          environment: ${{ github.event.inputs.environment }}
-          site: ${{ github.event.inputs.site }}
+  # Testing Stop IHS reusable workflow
+  ihs_stop:
+    name: 'Stop IHS'
+    needs: deploy_site
+    uses: ./.github/workflows/_cd-ihs-stop.yml
+    with:
+      application: ${{ github.event.inputs.application }}
+      oc: ${{ github.event.inputs.oc }}
+      environment: ${{ github.event.inputs.environment }}
+      site: ${{ github.event.inputs.site }}
+
+  ihs_start:
+    name: 'Start IHS'
+    needs: ihs_stop
+    uses: ./.github/workflows/_cd-ihs-start.yml
+    with:
+      application: ${{ github.event.inputs.application }}
+      oc: ${{ github.event.inputs.oc }}
+      environment: ${{ github.event.inputs.environment }}
+      site: ${{ github.event.inputs.site }}
 
 
   # post_deployment:
