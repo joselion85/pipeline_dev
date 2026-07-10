@@ -125,9 +125,20 @@ jobs:
           echo "Copying artifacts for ${{ github.event.inputs.application }} to deployment server"
           # Add your commands to copy artifacts here
 
+  # Testing Stop IHS reusable workflow
+  ihs_stop:
+    name: 'Stop IHS'
+    needs: copy_artifacts
+    uses: ./.github/workflows/_cd-ihs-stop.yml
+    with:
+      application: ${{ github.event.inputs.application }}
+      oc: ${{ github.event.inputs.oc }}
+      environment: ${{ github.event.inputs.environment }}
+      site: ${{ github.event.inputs.site }}
+
   deploy_site:
     name: 'Deploy to Site'
-    needs: copy_artifacts
+    needs: [copy_artifacts, ihs_stop]
     # environment:
     #   name: deploy_site1
     runs-on: ubuntu-latest
@@ -160,20 +171,12 @@ jobs:
           environment: ${{ github.event.inputs.environment }}
           site: ${{ github.event.inputs.site }}
 
-  # Testing Stop IHS reusable workflow
-  ihs_stop:
-    name: 'Stop IHS'
-    needs: deploy_site
-    uses: ./.github/workflows/_cd-ihs-stop.yml
-    with:
-      application: ${{ github.event.inputs.application }}
-      oc: ${{ github.event.inputs.oc }}
-      environment: ${{ github.event.inputs.environment }}
-      site: ${{ github.event.inputs.site }}
 
+
+  # Testing Stop IHS reusable workflow
   ihs_start:
     name: 'Start IHS'
-    needs: ihs_stop
+    needs: [deploy_site, ihs_stop]
     uses: ./.github/workflows/_cd-ihs-start.yml
     with:
       application: ${{ github.event.inputs.application }}
@@ -206,7 +209,7 @@ jobs:
 
   resumen:
     name: 'Generate Deployment Summary'
-    needs: deploy_site
+    needs: [deploy_site, ihs_stop, ihs_start]
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -229,4 +232,3 @@ jobs:
         run: |
           echo "Cleaning up ephemeral resources for ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
           # Add your cleanup commands here
-

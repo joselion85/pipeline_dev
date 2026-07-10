@@ -33,8 +33,8 @@ on:
         default: 'site1'
 
 jobs:
-  prepare:
-    name: 'Prepare Start IHS'
+  start_ihs:
+    name: 'Start IHS'
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout code'
@@ -42,15 +42,21 @@ jobs:
 
       - name: 'Start IHS'
         id: start-ihs
-        uses: ./github/actions/ihs-start
+        uses: ./.github/actions/ihs-start
         with:
           application: ${{ inputs.application }}
-          oc: ${{ inputs.oc }}
           environment: ${{ inputs.environment }}
           site: ${{ inputs.site }}
 
+  summary:
+    name: 'Generate Summary'
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
       - name: 'Generate Summary'
         id: generate-summary
         run: |
           echo "Generating summary for IHS start operation..."
           # Add commands to generate summary here
+          echo "::notice::IHS start operation completed for application: ${{ inputs.application }}, Environment: ${{ inputs.environment }}, Site: ${{ inputs.site }}"
+          

@@ -42,15 +42,21 @@ jobs:
 
       - name: 'Stop IHS'
         id: stop-ihs
-        uses: ./github/actions/ihs-stop
+        uses: ./.github/actions/ihs-stop
         with:
           application: ${{ inputs.application }}
-          oc: ${{ inputs.oc }}
           environment: ${{ inputs.environment }}
           site: ${{ inputs.site }}
 
+  summary:
+    name: 'Generate Summary'
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
       - name: 'Generate Summary'
         id: generate-summary
         run: |
           echo "Generating summary for IHS stop operation..."
           # Add commands to generate summary here
+          echo "::notice::IHS stop operation completed for application: ${{ inputs.application }}, Environment: ${{ inputs.environment }}, Site: ${{ inputs.site }}"
+  
