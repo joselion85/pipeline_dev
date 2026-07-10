@@ -15,6 +15,11 @@ on:
         required: true
         type: string
         default: 'uat'
+      site:
+        description: 'Site to deploy to'
+        required: true
+        type: string
+        default: 'site1'
   workflow_dispatch:
     inputs:
       application:
@@ -35,6 +40,14 @@ on:
           - uat
           - sit
           - prod
+      site:
+        description: 'Site to deploy to'
+        required: true
+        type: choice
+        default: 'site1'
+        options:
+          - site1
+          - site2
 
 jobs:
   prepare:
@@ -46,10 +59,12 @@ jobs:
 
       - name: 'Artifactory Login'
         id: artifactory-login
+        # uses: ibkpe-platform-org/dso-was-reusable/.github/actions/artifactory-login
+        uses: ./github/actions/artifactory-login
         run: |
           echo "Logging into Artifactory for ${{ github.event.inputs.application }}"
           # Add your commands to log into Artifactory here        
-        # uses: ibkpe-platform-org/dso-was-reusable/.github/actions/artifactory-login
+
         # with:
         #   application: ${{ steps.prepare.outputs.lower-application }}
         #   artifactory-username: ${{ env.ARTIFACTORY_USER_NAME }}
@@ -93,8 +108,8 @@ jobs:
           echo "Copying artifacts for ${{ github.event.inputs.application }} to deployment server"
           # Add your commands to copy artifacts here
 
-  deploy_site1:
-    name: 'Deploy to Site 1'
+  deploy_site:
+    name: 'Deploy to Site'
     needs: copy_artifacts
     # environment:
     #   name: deploy_site1
@@ -103,31 +118,16 @@ jobs:
       - name: 'Checkout code'
         uses: actions/checkout@v5
 
-      - name: 'Deploy Application to Site 1'
+      - name: 'Deploy Application to Site'
         run: |
-          echo "Deploying ${{ github.event.inputs.application }} to Site 1 in ${{ github.event.inputs.environment }}"
-          # Add your deployment commands for Site 1 here
-
-  deploy_site2:
-    name: 'Deploy to Site 2'
-    needs: [copy_artifacts, deploy_site1]
-    # environment:
-    #   name: deploy_site2
-    runs-on: ubuntu-latest
-    steps:
-      - name: 'Checkout code'
-        uses: actions/checkout@v5
-
-      - name: 'Deploy Application to Site 2'
-        run: |
-          echo "Deploying ${{ github.event.inputs.application }} to Site 2 in ${{ github.event.inputs.environment }}"
-          # Add your deployment commands for Site 2 here
+          echo "Deploying ${{ github.event.inputs.application }} to Site ${{ github.event.inputs.site }} in ${{ github.event.inputs.environment }}"
+          # Add your deployment commands for Site ${{ github.event.inputs.site }} here
 
   post_deployment:
     name: 'Post Deployment Verification'
-    needs: [deploy_site1, deploy_site2]
-    environment:
-      name: Validation
+    needs: deploy_site
+    # environment:
+    #   name: Validation
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout code'
@@ -138,7 +138,12 @@ jobs:
           echo "::notice::Verifying deployment of ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
           echo "Verifying deployment of ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
           # Add your verification commands here
-
+      
+      # Add failure to trigger rollback (for testing purposes)
+      - name: 'Simulate Failure for Rollback'
+        run: |
+          echo "::error::Simulating failure to trigger rollback"
+          exit 1
 
   resumen:
     name: 'Generate Deployment Summary'
@@ -159,3 +164,42 @@ jobs:
         run: |
           echo "Uploading deployment summary for ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
           # Add your commands to upload the summary artifact here
+
+  rollback:
+    name: 'Rollback Deployment'
+    needs: [deploy_site, post_deployment]
+    runs-on: ubuntu-latest
+    if: |
+      (needs.deploy_site.result == 'success') &&
+      (needs.post_deployment.result == 'failure' || needs.post_deployment.result == 'cancelled')
+    steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@v5
+
+      # Call another workflow for rollback
+      - name: 'Trigger Rollback Workflow'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const workflow_id = '.github/workflows/_cd-rollback-prv.yml';
+            const ref = context.ref;
+            const inputs = {
+              application: '${{ github.event.inputs.application }}',
+              environment: '${{ github.event.inputs.environment }}',
+              oc: '${{ github.event.inputs.oc }}'
+            };
+            await github.actions.createWorkflowDispatch({
+              owner,
+              repo,
+              workflow_id,
+              ref,
+              inputs
+            });
+    
+      - name: 'Rollback Deployment'
+        run: |
+          echo "::notice::Rolling back deployment of ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
+          echo "Rolling back deployment of ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
+          # Add your rollback commands here
+        

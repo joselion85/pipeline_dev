@@ -1,0 +1,63 @@
+name: 'WAS Rollback Ambientes Previous'
+on:
+  workflow_call:
+    inputs:
+      application:
+        description: 'Application name for rollback'
+        required: true
+        type: string
+      oc:
+        description: 'OC number'
+        required: true
+        type: string
+      environment:
+        description: 'Environment to rollback'
+        required: true
+        type: string
+        default: 'uat'
+      site:
+        description: 'Site to rollback'
+        required: true
+        type: string
+        default: 'site1'
+  workflow_dispatch:
+    inputs:
+      application:
+        description: 'Application name for rollback'
+        required: true
+        type: string
+      oc:
+        description: 'OC number'
+        required: true
+        type: string
+      environment:
+        description: 'Environment to rollback'
+        required: true
+        type: choice
+        default: 'uat'
+        options:
+          - dev
+          - uat
+          - sit
+          - prod
+      site:
+        description: 'Site to rollback'
+        required: true
+        type: choice
+        default: 'site1'
+        options:
+          - site1
+          - site2
+
+  jobs:
+    rollback:
+      name: 'Rollback Deployment'
+      runs-on: ubuntu-latest
+      steps:
+        - name: 'Checkout code'
+          uses: actions/checkout@v5
+
+        - name: 'Rollback Application to Site'
+          run: |
+            echo "Rolling back ${{ github.event.inputs.application }} on Site ${{ github.event.inputs.site }} in ${{ github.event.inputs.environment }}"
+            # Add your rollback commands for Site ${{ github.event.inputs.site }} here
