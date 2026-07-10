@@ -59,12 +59,12 @@ jobs:
 
       - name: 'Artifactory Login'
         id: artifactory-login
-        # uses: ibkpe-platform-org/dso-was-reusable/.github/actions/artifactory-login
-        uses: ./github/actions/artifactory-login
+
         run: |
           echo "Logging into Artifactory for ${{ github.event.inputs.application }}"
-          # Add your commands to log into Artifactory here        
-
+          # Add your commands to log into Artifactory here  
+        # uses: ibkpe-platform-org/dso-was-reusable/.github/actions/artifactory-login
+        # uses: ./github/actions/artifactory-login                
         # with:
         #   application: ${{ steps.prepare.outputs.lower-application }}
         #   artifactory-username: ${{ env.ARTIFACTORY_USER_NAME }}
