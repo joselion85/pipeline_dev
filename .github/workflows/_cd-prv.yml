@@ -178,10 +178,11 @@ jobs:
       application: ${{ inputs.application }}
       environment: ${{ inputs.environment }}
       oc: ${{ inputs.oc }}
+      site: ${{ inputs.site }}
         
   rollback2:
     # Testing rollback with a different approach (Async call to another workflow)  
-    name: 'Rollback Deployment'
+    name: 'Rollback Deployment Async'
     needs: [deploy_site, post_deployment]
     runs-on: ubuntu-latest
     if: |
@@ -203,7 +204,8 @@ jobs:
             const inputs = {
               application: '${{ github.event.inputs.application }}',
               environment: '${{ github.event.inputs.environment }}',
-              oc: '${{ github.event.inputs.oc }}'
+              oc: '${{ github.event.inputs.oc }}',
+              site: '${{ github.event.inputs.site }}'
             };
             await github.actions.createWorkflowDispatch({
               owner,
