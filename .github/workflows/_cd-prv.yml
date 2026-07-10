@@ -135,32 +135,54 @@ jobs:
       - name: 'Checkout code'
         uses: actions/checkout@v5
 
+      - name: "Stop IHS for ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
+        uses: ./github/actions/ihs-stop
+        with:
+          application: ${{ github.event.inputs.application }}
+          oc: ${{ github.event.inputs.oc }}
+          environment: ${{ github.event.inputs.environment }}
+          site: ${{ github.event.inputs.site }}
+
       - name: 'Deploy Application to Site'
         run: |
           echo "Deploying ${{ github.event.inputs.application }} to Site ${{ github.event.inputs.site }} in ${{ github.event.inputs.environment }}"
           # Add your deployment commands for Site ${{ github.event.inputs.site }} here
 
-  post_deployment:
-    name: 'Post Deployment Verification'
-    needs: deploy_site
-    # environment:
-    #   name: Validation
-    runs-on: ubuntu-latest
-    steps:
-      - name: 'Checkout code'
-        uses: actions/checkout@v5
-
       - name: 'Verify Deployment'
         run: |
-          echo "::notice::Verifying deployment of ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
-          echo "Verifying deployment of ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
+          echo "Verifying deployment of ${{ github.event.inputs.application }} to Site ${{ github.event.inputs.site }} in ${{ github.event.inputs.environment }}"
+          echo "::notice::Verifying deployment of ${{ github.event.inputs.application }} to Site ${{ github.event.inputs.site }} in ${{ github.event.inputs.environment }}"
           # Add your verification commands here
+
+      - name: "Start IHS for ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
+        uses: ./github/actions/ihs-start
+        with:
+          application: ${{ github.event.inputs.application }}
+          oc: ${{ github.event.inputs.oc }}
+          environment: ${{ github.event.inputs.environment }}
+          site: ${{ github.event.inputs.site }}
+
+  # post_deployment:
+  #   name: 'Post Deployment Verification'
+  #   needs: deploy_site
+  #   # environment:
+  #   #   name: Validation
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: 'Checkout code'
+  #       uses: actions/checkout@v5
+
+  #     - name: 'Verify Deployment'
+  #       run: |
+  #         echo "::notice::Verifying deployment of ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
+  #         echo "Verifying deployment of ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
+  #         # Add your verification commands here
       
-      # Add failure to trigger rollback (for testing purposes)
-      - name: 'Simulate Failure for Rollback'
-        run: |
-          echo "::error::Simulating failure to trigger rollback"
-          exit 1
+  #     # # Add failure to trigger rollback (for testing purposes)
+  #     # - name: 'Simulate Failure for Rollback'
+  #     #   run: |
+  #     #     echo "::error::Simulating failure to trigger rollback"
+  #     #     exit 1
 
   resumen:
     name: 'Generate Deployment Summary'
@@ -182,4 +204,9 @@ jobs:
         run: |
           echo "Uploading deployment summary for ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
           # Add your commands to upload the summary artifact here
+      
+      - name: "Cleanup ephemeral resources"
+        run: |
+          echo "Cleaning up ephemeral resources for ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
+          # Add your cleanup commands here
 
