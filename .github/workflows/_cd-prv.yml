@@ -149,6 +149,7 @@ jobs:
     name: 'Generate Deployment Summary'
     needs: post_deployment
     runs-on: ubuntu-latest
+    if: always()
     steps:
       - name: 'Checkout code'
         uses: actions/checkout@v5
@@ -168,6 +169,20 @@ jobs:
   rollback:
     name: 'Rollback Deployment'
     needs: [deploy_site, post_deployment]
+    if: |
+      always() &&
+      (needs.deploy_site.result == 'success') &&
+      (needs.post_deployment.result == 'failure' || needs.post_deployment.result == 'cancelled')
+    uses: ./.github/workflows/_cd-rollback-prv.yml
+    with:
+      application: ${{ inputs.application }}
+      environment: ${{ inputs.environment }}
+      oc: ${{ inputs.oc }}
+        
+  rollback2:
+    # Testing rollback with a different approach (Async call to another workflow)  
+    name: 'Rollback Deployment'
+    needs: [deploy_site, post_deployment]
     runs-on: ubuntu-latest
     if: |
       always() &&
@@ -179,7 +194,7 @@ jobs:
 
       # Call another workflow for rollback
       - name: 'Trigger Rollback Workflow'
-        uses: actions/github-script@v6
+        uses: actions/github-script@v9
         with:
           script: |
             const { owner, repo } = context.repo;
@@ -200,7 +215,7 @@ jobs:
     
       - name: 'Rollback Deployment'
         run: |
-          echo "::notice::Rolling back deployment of ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
+          echo "::warning::Rolling back deployment of ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
           echo "Rolling back deployment of ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
           # Add your rollback commands here
         
