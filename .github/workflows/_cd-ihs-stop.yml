@@ -33,8 +33,8 @@ on:
         default: 'site1'
 
 jobs:
-  prepare:
-    name: 'Prepare Stop IHS'
+  stop_ihs:
+    name: 'Stop IHS'
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout code'
@@ -51,6 +51,7 @@ jobs:
   summary:
     name: 'Generate Summary'
     runs-on: ubuntu-latest
+    needs: stop_ihs
     if: always()
     steps:
       - name: 'Generate Summary'

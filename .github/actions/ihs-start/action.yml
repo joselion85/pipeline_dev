@@ -16,5 +16,5 @@ runs:
     - name: 'Start IHS'
       shell: bash    
       run: |
-        echo "Starting IHS for application: ${{ inputs.application }}, OC: ${{ inputs.oc }}, Environment: ${{ inputs.environment }}, Site: ${{ inputs.site }}"  
-        echo "::notice::Starting IHS for application: ${{ inputs.application }}, OC: ${{ inputs.oc }}, Environment: ${{ inputs.environment }}, Site: ${{ inputs.site }}"
+        echo "Starting IHS for application: ${{ inputs.application }}, Environment: ${{ inputs.environment }}, Site: ${{ inputs.site }}"  
+        echo "::notice::Starting IHS for application: ${{ inputs.application }}, Environment: ${{ inputs.environment }}, Site: ${{ inputs.site }}"
