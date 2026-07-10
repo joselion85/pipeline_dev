@@ -1,0 +1,159 @@
+name: 'WAS Deployment CD Pipeline UAT'
+on:
+  workflow_call:
+    inputs:
+      application:
+        description: 'Application name for deployment'
+        required: true
+        type: string
+      oc:
+        description: 'OC number'
+        required: true
+        type: string
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: string
+        default: 'uat'
+  workflow_dispatch:
+    inputs:
+      application:
+        description: 'Application name for deployment'
+        required: true
+        type: string
+      oc:
+        description: 'OC number'
+        required: true
+        type: string
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: choice
+        default: 'uat'
+        options:
+          - dev 
+          - uat
+          - sit
+          - prod
+
+jobs:
+  prepare:
+    name: 'Prepare Deployment'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@v3
+
+      - name: 'Artifactory Login'
+        id: artifactory-login
+        run: |
+          echo "Logging into Artifactory for ${{ github.event.inputs.application }}"
+          # Add your commands to log into Artifactory here        
+        # uses: ibkpe-platform-org/dso-was-reusable/.github/actions/artifactory-login
+        # with:
+        #   application: ${{ steps.prepare.outputs.lower-application }}
+        #   artifactory-username: ${{ env.ARTIFACTORY_USER_NAME }}
+        # env:
+        #   ARTIFACTORY_USER_PASSWORD: ${{ secrets.ARTIFACTORY_TOKEN }}
+        
+      - name: Download build artifacts from Artifactory
+        run: |
+          echo "Downloading build artifacts for ${{ github.event.inputs.application }} from Artifactory"
+          # Add your commands to download artifacts here
+        continue-on-error: false
+
+      - name: Generate Evidence Summary
+        run: |
+          echo "Generating evidence summary for ${{ github.event.inputs.application }} deployment"
+          # Add your commands to generate evidence summary here
+    
+  backup:
+    name: 'Backup Current Deployment'
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@v3
+
+      - name: 'Backup Current Deployment'
+        run: |
+          echo "Backing up current deployment of ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
+          # Add your backup commands here
+
+  copy_artifacts:
+    name: 'Copy Artifacts to Deployment Server'
+    needs: backup
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@v3
+
+      - name: 'Copy Artifacts'
+        run: |
+          echo "Copying artifacts for ${{ github.event.inputs.application }} to deployment server"
+          # Add your commands to copy artifacts here
+
+  deploy_site1:
+    name: 'Deploy to Site 1'
+    needs: copy_artifacts
+    # environment:
+    #   name: deploy_site1
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@v3
+
+      - name: 'Deploy Application to Site 1'
+        run: |
+          echo "Deploying ${{ github.event.inputs.application }} to Site 1 in ${{ github.event.inputs.environment }}"
+          # Add your deployment commands for Site 1 here
+
+  deploy_site2:
+    name: 'Deploy to Site 2'
+    needs: [copy_artifacts, deploy_site1]
+    # environment:
+    #   name: deploy_site2
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@v3
+
+      - name: 'Deploy Application to Site 2'
+        run: |
+          echo "Deploying ${{ github.event.inputs.application }} to Site 2 in ${{ github.event.inputs.environment }}"
+          # Add your deployment commands for Site 2 here
+
+  post_deployment:
+    name: 'Post Deployment Verification'
+    needs: [deploy_site1, deploy_site2]
+    # environment:
+    #   name: post_deployment
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@v3
+
+      - name: 'Verify Deployment'
+        run: |
+          echo "Verifying deployment of ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
+          # Add your verification commands here
+
+
+  resumen:
+    name: 'Generate Deployment Summary'
+    needs: post_deployment
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@v3
+
+      - name: 'Generate Summary'
+        run: |
+          echo "Generating deployment summary for ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
+          # Add your commands to generate a summary here
+      
+      - name: 'Upload Summary'
+        # uses: actions/upload-artifact@v3
+        run: |
+          echo "Uploading deployment summary for ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
+          # Add your commands to upload the summary artifact here
