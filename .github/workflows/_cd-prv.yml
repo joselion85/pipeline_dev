@@ -66,10 +66,6 @@ on:
           - site1
           - site2
 
-matrix:
-  site1: [va101, va102, va103, va104]
-  site2: [va201, va202, va203, va204]
-
 jobs:
   prepare:
     name: 'Prepare Deployment'
