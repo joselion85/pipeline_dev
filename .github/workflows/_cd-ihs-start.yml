@@ -5,9 +5,8 @@
 # workflows for starting the IHS in the UAT environment.
 #
 # Workflow stages:
-# 1. Prepare
-# 2. Start IHS
-# 3. Summary
+# 1. Start IHS
+# 2. Summary
 
 name: 'CD - WAS Start IHS Pipeline UAT'
 on:
@@ -49,7 +48,7 @@ jobs:
           site: ${{ inputs.site }}
 
   summary:
-    name: 'Generate Summary'
+    name: 'Summary'
     runs-on: ubuntu-latest
     needs: start_ihs
     if: always()

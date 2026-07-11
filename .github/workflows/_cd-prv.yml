@@ -10,9 +10,10 @@
 # 1. Prepare
 # 2. Backup
 # 3. Copy Artifacts
-# 4. Deploy to Site
-# 5. Post Deployment Verification
-# 6. Generate Deployment Summary
+# 4. Stop IHS (Workflow Call)
+# 5. Deploy to Site
+# 6. Start IHS (Workflow Call)
+# 7. Deployment Summary
 
 name: 'CD - WAS Deployment Pipeline UAT'
 on:
@@ -125,7 +126,6 @@ jobs:
           echo "Copying artifacts for ${{ github.event.inputs.application }} to deployment server"
           # Add your commands to copy artifacts here
 
-  # Testing Stop IHS reusable workflow
   ihs_stop:
     name: 'Stop IHS'
     needs: copy_artifacts
@@ -139,19 +139,10 @@ jobs:
   deploy_site:
     name: 'Deploy to Site'
     needs: [copy_artifacts, ihs_stop]
-    # environment:
-    #   name: deploy_site1
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout code'
         uses: actions/checkout@v5
-
-      - name: "Stop IHS for ${{ github.event.inputs.site }} in ${{ github.event.inputs.environment }}"
-        uses: ./.github/actions/ihs-stop
-        with:
-          application: ${{ github.event.inputs.application }}
-          environment: ${{ github.event.inputs.environment }}
-          site: ${{ github.event.inputs.site }}
 
       - name: 'Deploy Application to Site'
         run: |
@@ -164,16 +155,6 @@ jobs:
           echo "::notice::Verifying deployment of ${{ github.event.inputs.application }} to Site ${{ github.event.inputs.site }} in ${{ github.event.inputs.environment }}"
           # Add your verification commands here
 
-      - name: "Start IHS for ${{ github.event.inputs.site }} in ${{ github.event.inputs.environment }}"
-        uses: ./.github/actions/ihs-start
-        with:
-          application: ${{ github.event.inputs.application }}
-          environment: ${{ github.event.inputs.environment }}
-          site: ${{ github.event.inputs.site }}
-
-
-
-  # Testing Stop IHS reusable workflow
   ihs_start:
     name: 'Start IHS'
     needs: [deploy_site, ihs_stop]
@@ -185,30 +166,8 @@ jobs:
       site: ${{ github.event.inputs.site }}
 
 
-  # post_deployment:
-  #   name: 'Post Deployment Verification'
-  #   needs: deploy_site
-  #   # environment:
-  #   #   name: Validation
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: 'Checkout code'
-  #       uses: actions/checkout@v5
-
-  #     - name: 'Verify Deployment'
-  #       run: |
-  #         echo "::notice::Verifying deployment of ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
-  #         echo "Verifying deployment of ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
-  #         # Add your verification commands here
-      
-  #     # # Add failure to trigger rollback (for testing purposes)
-  #     # - name: 'Simulate Failure for Rollback'
-  #     #   run: |
-  #     #     echo "::error::Simulating failure to trigger rollback"
-  #     #     exit 1
-
-  resumen:
-    name: 'Generate Deployment Summary'
+  summary:
+    name: 'Generate Deployment Summary and evidence'
     needs: [deploy_site, ihs_stop, ihs_start]
     runs-on: ubuntu-latest
     if: always()
@@ -216,14 +175,13 @@ jobs:
       - name: 'Checkout code'
         uses: actions/checkout@v5
 
-      - name: 'Generate Summary'
+      - name: 'Generate Summary and evidence'
         run: |
           echo "::notice::Generating deployment summary for ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
           echo "Generating deployment summary for ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
           # Add your commands to generate a summary here
       
-      - name: 'Upload Summary'
-        # uses: actions/upload-artifact@v3
+      - name: 'Upload Summary and evidence'
         run: |
           echo "Uploading deployment summary for ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
           # Add your commands to upload the summary artifact here

@@ -5,9 +5,8 @@
 # workflows for stopping the IHS in the UAT environment.
 #
 # Workflow stages:
-# 1. Prepare
-# 2. Stop IHS
-# 3. Summary
+# 1. Stop IHS
+# 2. Summary
 
 name: 'CD - WAS Stop IHS Pipeline UAT'
 on:
@@ -49,7 +48,7 @@ jobs:
           site: ${{ inputs.site }}
 
   summary:
-    name: 'Generate Summary'
+    name: 'Summary'
     runs-on: ubuntu-latest
     needs: stop_ihs
     if: always()
