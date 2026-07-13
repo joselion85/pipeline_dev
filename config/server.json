@@ -1,0 +1,76 @@
+{
+    "dev": {
+        "site1": {
+            "was": [
+                "va101",
+                "va102",
+                "va103",
+                "va104"
+            ],
+            "ihs": [
+                "ihs-dev-s1-01",
+                "ihs-dev-s1-02"
+            ]
+        },
+        "site2": {
+            "was": [
+                "va111",
+                "va112",
+                "va113",
+                "va114"
+            ],
+            "ihs": [
+                "ihs-dev-s2-01",
+                "ihs-dev-s2-02"
+            ]
+        }
+    },
+    "uat": {
+        "site1": {
+            "was": [
+                "va201",
+                "va202",
+                "va203",
+                "va204"
+            ],
+            "ihs": [
+                "ihs-uat-s1-01",
+                "ihs-uat-s1-02"
+            ]
+        },
+        "site2": {
+            "was": [
+                "va211",
+                "va212",
+                "va213",
+                "va214"
+            ],
+            "ihs": [
+                "ihs-uat-s2-01",
+                "ihs-uat-s2-02"
+            ]
+        }
+    },
+    "prod": {
+        "site1": {
+            "was": [
+                "va109",
+                "va123"
+            ],
+            "ihs": [
+                "ihs-prod-s1-01",
+                "ihs-prod-s1-02"
+            ]
+        },
+        "site2": {
+            "was": [
+                "va118",
+                "va161"
+            ],
+            "ihs": [
+                "ihs-prod-s2-01",
+                "ihs-prod-s2-02"
+            ]
+        }
+    }
+}

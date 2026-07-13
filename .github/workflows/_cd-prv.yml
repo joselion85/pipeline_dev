@@ -25,7 +25,7 @@ on:
         type: string
       oc:
         description: 'OC number'
-        required: true
+        required: false
         type: string
       environment:
         description: 'Environment to deploy to'
@@ -46,7 +46,7 @@ on:
         type: string
       oc:
         description: 'OC number'
-        required: true
+        required: false
         type: string
       environment:
         description: 'Environment to deploy to'
@@ -68,16 +68,50 @@ on:
           - site2
 
 jobs:
+  # ===========================================================================
+  # 1. Prepare
+  # Get workflow information, checkout code, and prepare deployment variables.
   prepare:
     name: 'Prepare Deployment'
     runs-on: ubuntu-latest
+    outputs:
+      # deployment-runner-group: ${{ steps.prepare.outputs.deployment-runner-group }}
+      # prv-deployment-runner-group: ${{ steps.prepare.outputs.prv-deployment-runner-group }}
+      # github-environment: ${{ steps.prepare.outputs.github-environment }}
+      # lower-application: ${{ steps.prepare.outputs.lower-application }}
+      upper-application: ${{ steps.prepare.outputs.upper-application }}
+      # component-name: ${{ steps.prepare.outputs.component-name }}
+      was_servers: ${{ steps.prepare.outputs.was_servers }}
+      ihs_servers: ${{ steps.prepare.outputs.ihs_servers }}
     steps:
       - name: 'Checkout code'
         uses: actions/checkout@v5
+      
+      - name: 'Prepare WAS Deployment'
+        id: prepare
+        run: |
+          echo "Checking out code for ${{ inputs.application }}"
+          echo "Resolve servers based on Environment, Site and Microservice"
+
+          LOWER_APP=$(echo "${{ inputs.application }}" | tr '[:upper:]' '[:lower:]')
+          ENV="${{ inputs.environment }}"
+          SITE="${{ inputs.site }}"
+
+          WAS_SERVERS=$(jq -r --arg env "$ENV" --arg site "$SITE" \
+            '.[$env][$site].was | join(",")' config/server.json)
+          IHS_SERVERS=$(jq -r --arg env "$ENV" --arg site "$SITE" \
+            '.[$env][$site].ihs | join(",")' config/server.json)
+
+          echo "WAS servers for ${ENV}/${SITE}: ${WAS_SERVERS}"
+          echo "IHS servers for ${ENV}/${SITE}: ${IHS_SERVERS}"
+
+          echo "lower-application=${LOWER_APP}" >> "$GITHUB_OUTPUT"
+          echo "was_servers=${WAS_SERVERS}" >> "$GITHUB_OUTPUT"
+          echo "ihs_servers=${IHS_SERVERS}" >> "$GITHUB_OUTPUT"
+
 
       - name: 'Artifactory Login'
         id: artifactory-login
-
         run: |
           echo "Logging into Artifactory for ${{ github.event.inputs.application }}"
           # Add your commands to log into Artifactory here  
@@ -88,7 +122,7 @@ jobs:
         #   artifactory-username: ${{ env.ARTIFACTORY_USER_NAME }}
         # env:
         #   ARTIFACTORY_USER_PASSWORD: ${{ secrets.ARTIFACTORY_TOKEN }}
-        
+    
       - name: Download build artifacts from Artifactory
         run: |
           echo "Downloading build artifacts for ${{ github.event.inputs.application }} from Artifactory"
@@ -144,10 +178,20 @@ jobs:
       - name: 'Checkout code'
         uses: actions/checkout@v5
 
-      - name: 'Deploy Application to Site'
+      - name: "Login to DMGR and deploy .EAR"
+        run: |
+          echo "Logging into DMGR for ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
+          # Add your commands to log into DMGR here
+
+      - name: 'Deploy libraries to WAS'
         run: |
           echo "Deploying ${{ github.event.inputs.application }} to Site ${{ github.event.inputs.site }} in ${{ github.event.inputs.environment }}"
           # Add your deployment commands for Site ${{ github.event.inputs.site }} here
+
+      - name: "Restart WAS servers for ${{ github.event.inputs.site }} in ${{ github.event.inputs.environment }}"
+        run: |
+          echo "Restarting WAS servers for Site ${{ github.event.inputs.site }} in ${{ github.event.inputs.environment }}"
+          # Add your commands to restart WAS servers here
 
       - name: 'Verify Deployment'
         run: |
@@ -157,7 +201,7 @@ jobs:
 
   ihs_start:
     name: 'Start IHS'
-    needs: [deploy_site, ihs_stop]
+    needs: [ihs_stop, deploy_site]
     uses: ./.github/workflows/_cd-ihs-start.yml
     with:
       application: ${{ github.event.inputs.application }}
@@ -181,10 +225,9 @@ jobs:
           echo "Generating deployment summary for ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
           # Add your commands to generate a summary here
       
-      - name: 'Upload Summary and evidence'
+      - name: 'Upload Summary and evidence to repo'
         run: |
           echo "Uploading deployment summary for ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
-          # Add your commands to upload the summary artifact here
       
       - name: "Cleanup ephemeral resources"
         run: |
