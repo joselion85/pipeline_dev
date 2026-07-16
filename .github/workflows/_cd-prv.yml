@@ -222,12 +222,26 @@ jobs:
       - name: 'Generate Summary and evidence'
         run: |
           echo "::notice::Generating deployment summary for ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
-          echo "Generating deployment summary for ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
-          # Add your commands to generate a summary here
-      
-      - name: 'Upload Summary and evidence to repo'
-        run: |
-          echo "Uploading deployment summary for ${{ github.event.inputs.application }} in ${{ github.event.inputs.environment }}"
+
+          cat >> "$GITHUB_STEP_SUMMARY" << 'EOF'
+          ## Deployment Summary
+
+          | Field       | Value |
+          |-------------|-------|
+          | Application | ${{ inputs.application }} |
+          | Environment | ${{ inputs.environment }} |
+          | Site        | ${{ inputs.site }} |
+          | OC Number   | ${{ inputs.oc }} |
+          | Triggered by | ${{ github.actor }} |
+          | Run ID      | ${{ github.run_id }} |
+
+          ### Job Results
+          | Job           | Status |
+          |---------------|--------|
+          | Deploy Site   | ${{ needs.deploy_site.result }} |
+          | IHS Stop      | ${{ needs.ihs_stop.result }} |
+          | IHS Start     | ${{ needs.ihs_start.result }} |
+          EOF
       
       - name: "Cleanup ephemeral resources"
         run: |
